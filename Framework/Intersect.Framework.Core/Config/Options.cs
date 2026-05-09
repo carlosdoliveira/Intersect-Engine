@@ -14,7 +14,7 @@ namespace Intersect;
 
 public partial record Options
 {
-    private static readonly object InstanceSync = new();
+    private static readonly object InstanceLock = new();
 
     private static readonly JsonSerializerSettings PrivateIndentedSerializerSettings = new()
     {
@@ -244,7 +244,7 @@ public partial record Options
 
     public static bool LoadFromDisk()
     {
-        lock (InstanceSync)
+        lock (InstanceLock)
         {
             var instance = ReadFromDisk();
             Instance = instance;
@@ -258,7 +258,7 @@ public partial record Options
 
     public static OptionsReloadResult ReloadLiveFromDisk()
     {
-        lock (InstanceSync)
+        lock (InstanceLock)
         {
             var current = Instance ?? EnsureCreated();
             var originalLoggingLevel = current.Logging.Level;
@@ -289,8 +289,13 @@ public partial record Options
 
     internal static Options EnsureCreated()
     {
-        lock (InstanceSync)
+        lock (InstanceLock)
         {
+            if (Instance is { } existingInstance)
+            {
+                return existingInstance;
+            }
+
             Options instance = new();
             Instance = instance;
             return instance;
@@ -299,7 +304,7 @@ public partial record Options
 
     public static void SaveToDisk()
     {
-        lock (InstanceSync)
+        lock (InstanceLock)
         {
             if (Instance is not { } instance)
             {
@@ -334,7 +339,7 @@ public partial record Options
 
     public static void LoadFromServer(string data)
     {
-        lock (InstanceSync)
+        lock (InstanceLock)
         {
             try
             {
