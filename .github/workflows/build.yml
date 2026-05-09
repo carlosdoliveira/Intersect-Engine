@@ -42,6 +42,18 @@ env:
   VERSION_SUFFIX: -beta
 
 jobs:
+  check-release-token:
+    name: Check release token
+    runs-on: ubuntu-latest
+    outputs:
+      publish-github: ${{ steps.token-state.outputs.publish-github }}
+    steps:
+      - id: token-state
+        name: Check token state
+        env:
+          PUBLISH_GITHUB: ${{ secrets.INTERSECTBOT_ACCESS_TOKEN != '' }}
+        run: echo "publish-github=$PUBLISH_GITHUB" >> "$GITHUB_OUTPUT"
+
   generate-keys:
     name: Generate Version-Specific Network Keys
     runs-on: ubuntu-latest
@@ -332,9 +344,9 @@ jobs:
 
   publish-github:
     name: Publish GitHub Release
-    needs: [build-linux, build-macos, build-windows]
+    needs: [build-linux, build-macos, build-windows, check-release-token]
     runs-on: ubuntu-latest
-    if: inputs.workflowDebug != true && github.repository == 'carlosdoliveira/Intersect-Engine' && secrets.INTERSECTBOT_ACCESS_TOKEN != ''
+    if: inputs.workflowDebug != true && github.repository == 'carlosdoliveira/Intersect-Engine' && needs.check-release-token.outputs.publish-github == 'true'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
