@@ -42,18 +42,6 @@ env:
   VERSION_SUFFIX: -beta
 
 jobs:
-  check-release-token:
-    name: Check release token
-    runs-on: ubuntu-latest
-    outputs:
-      publish-github: ${{ steps.token-state.outputs.publish-github }}
-    steps:
-      - id: token-state
-        name: Check token state
-        env:
-          PUBLISH_GITHUB: ${{ secrets.INTERSECTBOT_ACCESS_TOKEN != '' }}
-        run: echo "publish-github=$PUBLISH_GITHUB" >> "$GITHUB_OUTPUT"
-
   generate-keys:
     name: Generate Version-Specific Network Keys
     runs-on: ubuntu-latest
@@ -344,9 +332,9 @@ jobs:
 
   publish-github:
     name: Publish GitHub Release
-    needs: [build-linux, build-macos, build-windows, check-release-token]
+    needs: [build-linux, build-macos, build-windows]
     runs-on: ubuntu-latest
-    if: inputs.workflowDebug != true && github.repository == 'carlosdoliveira/Intersect-Engine' && needs.check-release-token.outputs.publish-github == 'true'
+    if: inputs.workflowDebug != true && github.repository == 'carlosdoliveira/Intersect-Engine'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -371,7 +359,6 @@ jobs:
           path: assets_upgrade
           repository: AscensionGameDev/Intersect-Assets
           ref: main_upgrade
-          token: ${{ secrets.INTERSECTBOT_ACCESS_TOKEN }}
 
       - name: Checkout target main_full branch
         uses: actions/checkout@v4
@@ -380,7 +367,6 @@ jobs:
           path: assets_full
           repository: AscensionGameDev/Intersect-Assets
           ref: main_full
-          token: ${{ secrets.INTERSECTBOT_ACCESS_TOKEN }}
 
       - name: Package artifacts
         uses: AscensionGameDev/actions@7bc0d0221a73dfcd7620c5c151b31ee8815d95a0
