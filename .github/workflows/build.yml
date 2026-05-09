@@ -334,7 +334,7 @@ jobs:
     name: Publish GitHub Release
     needs: [build-linux, build-macos, build-windows]
     runs-on: ubuntu-latest
-    if: inputs.workflowDebug != true && github.repository == 'carlosdoliveira/Intersect-Engine'
+    if: inputs.workflowDebug != true && github.repository == 'carlosdoliveira/Intersect-Engine' && secrets.INTERSECTBOT_ACCESS_TOKEN != ''
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -359,7 +359,7 @@ jobs:
           path: assets_upgrade
           repository: AscensionGameDev/Intersect-Assets
           ref: main_upgrade
-          token: ${{ secrets.INTERSECTBOT_ACCESS_TOKEN || github.token }}
+          token: ${{ secrets.INTERSECTBOT_ACCESS_TOKEN }}
 
       - name: Checkout target main_full branch
         uses: actions/checkout@v4
@@ -368,7 +368,7 @@ jobs:
           path: assets_full
           repository: AscensionGameDev/Intersect-Assets
           ref: main_full
-          token: ${{ secrets.INTERSECTBOT_ACCESS_TOKEN || github.token }}
+          token: ${{ secrets.INTERSECTBOT_ACCESS_TOKEN }}
 
       - name: Package artifacts
         uses: AscensionGameDev/actions@7bc0d0221a73dfcd7620c5c151b31ee8815d95a0
