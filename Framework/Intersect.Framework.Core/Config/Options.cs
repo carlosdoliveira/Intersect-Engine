@@ -1,10 +1,14 @@
 using System.ComponentModel;
+using System.Reflection;
 using Intersect.Config;
 using Intersect.Config.Guilds;
 using Intersect.Core;
 using Intersect.Framework.Annotations;
+using Intersect.Framework.Reflection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Serilog.Extensions.Logging;
 
 namespace Intersect;
 
@@ -238,26 +242,41 @@ public partial record Options
 
     public static bool LoadFromDisk()
     {
-        var instance = EnsureCreated();
-
-        var pathToServerConfig = Path.Combine(ResourcesDirectory, "config.json");
-        if (!Directory.Exists(ResourcesDirectory))
-        {
-            Directory.CreateDirectory(ResourcesDirectory);
-        }
-        else if (File.Exists(pathToServerConfig))
-        {
-            var rawJson = File.ReadAllText(pathToServerConfig);
-            instance = JsonConvert.DeserializeObject<Options>(rawJson, PrivateSerializerSettings) ?? instance;
-            Instance = instance;
-        }
-
-        instance.SmtpValid = instance.SmtpSettings.IsValid();
-        instance.FixAnimatedSprites();
+        var instance = ReadFromDisk();
+        Instance = instance;
+        PendingChanges = null;
 
         SaveToDisk();
 
         return true;
+    }
+
+    public static OptionsReloadResult ReloadLiveFromDisk()
+    {
+        var current = Instance ?? EnsureCreated();
+        var originalLoggingLevel = current.Logging.Level;
+        Options updated;
+
+        try
+        {
+            updated = ReadFromDisk(throwIfMissing: true);
+        }
+        catch
+        {
+            LoggingOptions.LoggingLevelSwitch.MinimumLevel = LevelConvert.ToSerilogLevel(originalLoggingLevel);
+            throw;
+        }
+
+        List<string> appliedChanges = [];
+        List<string> restartRequiredChanges = [];
+        ApplyReloadableChanges(current, updated, appliedChanges, restartRequiredChanges);
+
+        current.SmtpValid = current.SmtpSettings.IsValid();
+        current.FixAnimatedSprites();
+        current.RefreshSerializedData();
+        PendingChanges = null;
+
+        return new OptionsReloadResult(appliedChanges, restartRequiredChanges);
     }
 
     internal static Options EnsureCreated()
@@ -296,7 +315,7 @@ public partial record Options
             );
         }
 
-        instance.OptionsData = JsonConvert.SerializeObject(instance, PublicSerializerSettings);
+        instance.RefreshSerializedData();
     }
 
     public static void LoadFromServer(string data)
@@ -319,4 +338,132 @@ public partial record Options
     public Options DeepClone() => JsonConvert.DeserializeObject<Options>(
         JsonConvert.SerializeObject(this, PrivateSerializerSettings)
     );
+
+    private static void ApplyReloadableChanges(
+        object currentTarget,
+        object updatedTarget,
+        ICollection<string> appliedChanges,
+        ICollection<string> restartRequiredChanges,
+        string? path = null,
+        bool parentRequiresRestart = false
+    )
+    {
+        var properties = currentTarget.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        foreach (var propertyInfo in properties)
+        {
+            if (propertyInfo.IsIgnored() || propertyInfo.GetMethod == null || propertyInfo.SetMethod == null ||
+                propertyInfo.GetIndexParameters().Length > 0)
+            {
+                continue;
+            }
+
+            var currentValue = propertyInfo.GetValue(currentTarget);
+            var updatedValue = propertyInfo.GetValue(updatedTarget);
+            var propertyPath = string.IsNullOrWhiteSpace(path) ? propertyInfo.Name : $"{path}.{propertyInfo.Name}";
+            var hasChanged = HasChanged(currentValue, updatedValue);
+            var requiresRestart =
+                parentRequiresRestart && !DoesNotRequireRestartAttribute.DoesNotRequireRestart(propertyInfo) ||
+                RequiresRestartAttribute.RequiresRestart(propertyInfo);
+
+            if (CanApplyChildProperties(propertyInfo.PropertyType, currentValue, updatedValue))
+            {
+                var appliedBefore = appliedChanges.Count;
+                var restartRequiredBefore = restartRequiredChanges.Count;
+                ApplyReloadableChanges(
+                    currentValue!,
+                    updatedValue!,
+                    appliedChanges,
+                    restartRequiredChanges,
+                    propertyPath,
+                    requiresRestart
+                );
+
+                if (requiresRestart && hasChanged &&
+                    appliedBefore == appliedChanges.Count &&
+                    restartRequiredBefore == restartRequiredChanges.Count)
+                {
+                    restartRequiredChanges.Add(propertyPath);
+                }
+
+                continue;
+            }
+
+            if (requiresRestart)
+            {
+                if (hasChanged)
+                {
+                    restartRequiredChanges.Add(propertyPath);
+                }
+
+                continue;
+            }
+
+            if (!hasChanged)
+            {
+                continue;
+            }
+
+            propertyInfo.SetValue(currentTarget, updatedValue);
+            appliedChanges.Add(propertyPath);
+        }
+    }
+
+    private static bool CanApplyChildProperties(Type propertyType, object? currentValue, object? updatedValue)
+    {
+        if (currentValue == null || updatedValue == null)
+        {
+            return false;
+        }
+
+        if (propertyType == typeof(string) || propertyType.IsValueType)
+        {
+            return false;
+        }
+
+        return !typeof(System.Collections.IEnumerable).IsAssignableFrom(propertyType);
+    }
+
+    private static bool HasChanged(object? currentValue, object? updatedValue)
+    {
+        if (currentValue == null || updatedValue == null)
+        {
+            return currentValue != updatedValue;
+        }
+
+        return !JToken.DeepEquals(JToken.FromObject(currentValue), JToken.FromObject(updatedValue));
+    }
+
+    private static Options ReadFromDisk(bool throwIfMissing = false)
+    {
+        Options instance = new();
+        var pathToServerConfig = Path.Combine(ResourcesDirectory, "config.json");
+
+        if (!Directory.Exists(ResourcesDirectory))
+        {
+            Directory.CreateDirectory(ResourcesDirectory);
+        }
+
+        if (File.Exists(pathToServerConfig))
+        {
+            var rawJson = File.ReadAllText(pathToServerConfig);
+            instance = JsonConvert.DeserializeObject<Options>(rawJson, PrivateSerializerSettings) ?? instance;
+        }
+        else if (throwIfMissing)
+        {
+            throw new FileNotFoundException("Server configuration file was not found.", pathToServerConfig);
+        }
+
+        instance.SmtpValid = instance.SmtpSettings.IsValid();
+        instance.FixAnimatedSprites();
+        instance.RefreshSerializedData();
+
+        return instance;
+    }
+
+    private void RefreshSerializedData() => OptionsData = JsonConvert.SerializeObject(this, PublicSerializerSettings);
 }
+
+public sealed record OptionsReloadResult(
+    IReadOnlyCollection<string> AppliedChanges,
+    IReadOnlyCollection<string> RestartRequiredChanges
+);

@@ -452,6 +452,21 @@ public static partial class Strings
         public readonly LocalizedString PowerChanged = @"{00} has had their power updated!";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ReloadAppliedHeader = @"Applied reload-safe settings:";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ReloadFailed = @"Configuration reload failed: {00}";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ReloadNoReloadableChanges = @"No reload-safe settings changed.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ReloadRestartRequiredHeader = @"Changed settings still requiring restart:";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocalizedString ReloadSucceeded = @"Configuration reload completed.";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocalizedString ServerInfo = @"Server has:";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

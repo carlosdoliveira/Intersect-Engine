@@ -6,7 +6,7 @@ namespace Intersect.Framework.Annotations;
     AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Struct |
     AttributeTargets.Enum
 )]
-public sealed class DoesNotRequireRestartAttribute : CachedExistenceAttribute<IgnoreAttribute>
+public sealed class DoesNotRequireRestartAttribute : CachedExistenceAttribute<DoesNotRequireRestartAttribute>
 {
     public static bool DoesNotRequireRestart(MemberInfo memberInfo) => ExistsOn(memberInfo);
 }

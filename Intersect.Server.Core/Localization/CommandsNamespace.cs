@@ -243,6 +243,14 @@ public static partial class Strings
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public readonly LocalizedString RequiredInfo = @"(required)";
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public readonly LocaleCommand Reload = new LocaleCommand
+        {
+            Name = @"reload",
+            Description = @"Reloads reload-safe server configuration values from config.json.",
+            Help = @"reloads config.json without restarting when possible"
+        };
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public readonly LocaleCommand Unban = new LocaleCommand
         {
             Name = @"unban",

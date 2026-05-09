@@ -48,6 +48,7 @@ namespace Intersect.Server.Core
                 Parser.Register<PanicCommand>();
                 Parser.Register<PowerAccountCommand>();
                 Parser.Register<PowerCommand>();
+                Parser.Register<ReloadCommand>();
                 Parser.Register<SetVariableCommand>();
                 Parser.Register<UnbanCommand>();
                 Parser.Register<UnmuteCommand>();
