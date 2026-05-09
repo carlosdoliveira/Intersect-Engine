@@ -362,7 +362,7 @@ public partial record Options
             var propertyPath = string.IsNullOrWhiteSpace(path) ? propertyInfo.Name : $"{path}.{propertyInfo.Name}";
             var hasChanged = HasChanged(currentValue, updatedValue);
             var requiresRestart =
-                parentRequiresRestart && !DoesNotRequireRestartAttribute.DoesNotRequireRestart(propertyInfo) ||
+                (parentRequiresRestart && !DoesNotRequireRestartAttribute.DoesNotRequireRestart(propertyInfo)) ||
                 RequiresRestartAttribute.RequiresRestart(propertyInfo);
 
             if (CanApplyChildProperties(propertyInfo.PropertyType, currentValue, updatedValue))
