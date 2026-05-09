@@ -1,15 +1,21 @@
 using System.ComponentModel;
+using System.Reflection;
 using Intersect.Config;
 using Intersect.Config.Guilds;
 using Intersect.Core;
 using Intersect.Framework.Annotations;
+using Intersect.Framework.Reflection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Serilog.Extensions.Logging;
 
 namespace Intersect;
 
 public partial record Options
 {
+    private static readonly object InstanceLock = new();
+
     private static readonly JsonSerializerSettings PrivateIndentedSerializerSettings = new()
     {
         ContractResolver = new OptionsContractResolver(true, false),
@@ -238,79 +244,114 @@ public partial record Options
 
     public static bool LoadFromDisk()
     {
-        var instance = EnsureCreated();
-
-        var pathToServerConfig = Path.Combine(ResourcesDirectory, "config.json");
-        if (!Directory.Exists(ResourcesDirectory))
+        lock (InstanceLock)
         {
-            Directory.CreateDirectory(ResourcesDirectory);
-        }
-        else if (File.Exists(pathToServerConfig))
-        {
-            var rawJson = File.ReadAllText(pathToServerConfig);
-            instance = JsonConvert.DeserializeObject<Options>(rawJson, PrivateSerializerSettings) ?? instance;
+            var instance = ReadFromDisk();
             Instance = instance;
+            PendingChanges = null;
+
+            SaveToDisk();
+
+            return true;
         }
+    }
 
-        instance.SmtpValid = instance.SmtpSettings.IsValid();
-        instance.FixAnimatedSprites();
+    public static OptionsReloadResult ReloadLiveFromDisk()
+    {
+        lock (InstanceLock)
+        {
+            var current = Instance ?? EnsureCreated();
+            var originalLoggingLevel = current.Logging.Level;
+            Options updated;
 
-        SaveToDisk();
+            try
+            {
+                updated = ReadFromDisk(throwIfMissing: true);
+            }
+            catch
+            {
+                LoggingOptions.LoggingLevelSwitch.MinimumLevel = LevelConvert.ToSerilogLevel(originalLoggingLevel);
+                throw;
+            }
 
-        return true;
+            List<string> appliedChanges = [];
+            List<string> restartRequiredChanges = [];
+            ApplyReloadableChanges(current, updated, appliedChanges, restartRequiredChanges);
+
+            current.SmtpValid = current.SmtpSettings.IsValid();
+            current.FixAnimatedSprites();
+            current.RefreshSerializedData();
+            PendingChanges = null;
+
+            return new OptionsReloadResult(appliedChanges, restartRequiredChanges);
+        }
     }
 
     internal static Options EnsureCreated()
     {
-        Options instance = new();
-        Instance = instance;
-        return instance;
+        lock (InstanceLock)
+        {
+            if (Instance is { } existingInstance)
+            {
+                return existingInstance;
+            }
+
+            Options instance = new();
+            Instance = instance;
+            return instance;
+        }
     }
 
     public static void SaveToDisk()
     {
-        if (Instance is not { } instance)
+        lock (InstanceLock)
         {
-            ApplicationContext.Context.Value?.Logger.LogError("Tried to save null instance to disk");
-            return;
-        }
+            if (Instance is not { } instance)
+            {
+                ApplicationContext.Context.Value?.Logger.LogError("Tried to save null instance to disk");
+                return;
+            }
 
-        if (!Directory.Exists(ResourcesDirectory))
-        {
-            Directory.CreateDirectory(ResourcesDirectory);
-        }
+            if (!Directory.Exists(ResourcesDirectory))
+            {
+                Directory.CreateDirectory(ResourcesDirectory);
+            }
 
-        var pathToServerConfig = Path.Combine(ResourcesDirectory, "config.json");
+            var pathToServerConfig = Path.Combine(ResourcesDirectory, "config.json");
 
-        try
-        {
-            var serializedPrivateConfiguration = JsonConvert.SerializeObject(instance, PrivateIndentedSerializerSettings);
-            File.WriteAllText(pathToServerConfig, serializedPrivateConfiguration);
-        }
-        catch (Exception exception)
-        {
-            ApplicationContext.Context.Value?.Logger.LogError(
-                exception,
-                "Failed to save options to {OptionsPath}",
-                pathToServerConfig
-            );
-        }
+            try
+            {
+                var serializedPrivateConfiguration = JsonConvert.SerializeObject(instance, PrivateIndentedSerializerSettings);
+                File.WriteAllText(pathToServerConfig, serializedPrivateConfiguration);
+            }
+            catch (Exception exception)
+            {
+                ApplicationContext.Context.Value?.Logger.LogError(
+                    exception,
+                    "Failed to save options to {OptionsPath}",
+                    pathToServerConfig
+                );
+            }
 
-        instance.OptionsData = JsonConvert.SerializeObject(instance, PublicSerializerSettings);
+            instance.RefreshSerializedData();
+        }
     }
 
     public static void LoadFromServer(string data)
     {
-        try
+        lock (InstanceLock)
         {
-            var loadedOptions = JsonConvert.DeserializeObject<Options>(data, PublicSerializerSettings);
-            Instance = loadedOptions;
-            OptionsLoaded?.Invoke(loadedOptions);
-        }
-        catch (Exception exception)
-        {
-            ApplicationContext.CurrentContext.Logger.LogError(exception, "Failed to load options from server");
-            throw;
+            try
+            {
+                var loadedOptions = JsonConvert.DeserializeObject<Options>(data, PublicSerializerSettings);
+                Instance = loadedOptions;
+                OptionsLoaded?.Invoke(loadedOptions);
+            }
+            catch (Exception exception)
+            {
+                ApplicationContext.CurrentContext.Logger.LogError(exception, "Failed to load options from server");
+                throw;
+            }
         }
     }
 
@@ -319,4 +360,135 @@ public partial record Options
     public Options DeepClone() => JsonConvert.DeserializeObject<Options>(
         JsonConvert.SerializeObject(this, PrivateSerializerSettings)
     );
+
+    private static void ApplyReloadableChanges(
+        object currentTarget,
+        object updatedTarget,
+        ICollection<string> appliedChanges,
+        ICollection<string> restartRequiredChanges,
+        string? path = null,
+        bool parentRequiresRestart = false
+    )
+    {
+        var properties = currentTarget.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        foreach (var propertyInfo in properties)
+        {
+            if (propertyInfo.IsIgnored() || propertyInfo.GetMethod == null || propertyInfo.SetMethod == null ||
+                propertyInfo.GetIndexParameters().Length > 0)
+            {
+                continue;
+            }
+
+            var currentValue = propertyInfo.GetValue(currentTarget);
+            var updatedValue = propertyInfo.GetValue(updatedTarget);
+            var propertyPath = string.IsNullOrWhiteSpace(path) ? propertyInfo.Name : $"{path}.{propertyInfo.Name}";
+            var hasChanged = HasChanged(currentValue, updatedValue);
+            var requiresRestart =
+                (parentRequiresRestart && !DoesNotRequireRestartAttribute.DoesNotRequireRestart(propertyInfo)) ||
+                RequiresRestartAttribute.RequiresRestart(propertyInfo);
+
+            if (CanApplyChildProperties(propertyInfo.PropertyType, currentValue, updatedValue))
+            {
+                var appliedBefore = appliedChanges.Count;
+                var restartRequiredBefore = restartRequiredChanges.Count;
+                ApplyReloadableChanges(
+                    currentValue!,
+                    updatedValue!,
+                    appliedChanges,
+                    restartRequiredChanges,
+                    propertyPath,
+                    requiresRestart
+                );
+
+                if (requiresRestart && hasChanged &&
+                    appliedBefore == appliedChanges.Count &&
+                    restartRequiredBefore == restartRequiredChanges.Count)
+                {
+                    restartRequiredChanges.Add(propertyPath);
+                }
+
+                continue;
+            }
+
+            if (requiresRestart)
+            {
+                if (hasChanged)
+                {
+                    restartRequiredChanges.Add(propertyPath);
+                }
+
+                continue;
+            }
+
+            if (!hasChanged)
+            {
+                continue;
+            }
+
+            propertyInfo.SetValue(currentTarget, updatedValue);
+            appliedChanges.Add(propertyPath);
+        }
+    }
+
+    private static bool CanApplyChildProperties(Type propertyType, object? currentValue, object? updatedValue)
+    {
+        if (currentValue == null || updatedValue == null)
+        {
+            return false;
+        }
+
+        if (propertyType == typeof(string) || propertyType.IsValueType)
+        {
+            return false;
+        }
+
+        return !typeof(System.Collections.IEnumerable).IsAssignableFrom(propertyType);
+    }
+
+    private static bool HasChanged(object? currentValue, object? updatedValue)
+    {
+        if (currentValue == null || updatedValue == null)
+        {
+            return currentValue != updatedValue;
+        }
+
+        var currentToken = JToken.FromObject(currentValue);
+        var updatedToken = JToken.FromObject(updatedValue);
+
+        return !JToken.DeepEquals(currentToken, updatedToken);
+    }
+
+    private static Options ReadFromDisk(bool throwIfMissing = false)
+    {
+        Options instance = new();
+        var pathToServerConfig = Path.Combine(ResourcesDirectory, "config.json");
+
+        if (!Directory.Exists(ResourcesDirectory))
+        {
+            Directory.CreateDirectory(ResourcesDirectory);
+        }
+
+        if (File.Exists(pathToServerConfig))
+        {
+            var rawJson = File.ReadAllText(pathToServerConfig);
+            instance = JsonConvert.DeserializeObject<Options>(rawJson, PrivateSerializerSettings) ?? instance;
+        }
+        else if (throwIfMissing)
+        {
+            throw new FileNotFoundException("Server configuration file was not found.", pathToServerConfig);
+        }
+
+        instance.SmtpValid = instance.SmtpSettings.IsValid();
+        instance.FixAnimatedSprites();
+        instance.RefreshSerializedData();
+
+        return instance;
+    }
+
+    private void RefreshSerializedData() => OptionsData = JsonConvert.SerializeObject(this, PublicSerializerSettings);
 }
+
+public sealed record OptionsReloadResult(
+    IReadOnlyCollection<string> AppliedChanges,
+    IReadOnlyCollection<string> RestartRequiredChanges
+);
