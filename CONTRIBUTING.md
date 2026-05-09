@@ -2,7 +2,7 @@
 
 ## Links
 - [Discord](https://discord.gg/CvvsVpPMuF)
-- [Ascension Game Dev Community Forum](https://ascensiongamedev.com)
+- [GitHub Discussions](https://github.com/carlosdoliveira/Intersect-Engine/discussions)
 
 ## Table of Contents
 - [Contributing to Intersect](#contributing-to-intersect)
@@ -66,7 +66,7 @@ Host github.com
 
 ### Commit Signing with GPG
 
-Submitting to [`main`](https://github.com/AscensionGameDev/Intersect-Engine/tree/main) _requires_ commits to be GPG signed, and GPG signing of all commits is strongly recommended for _all_ pull requests.
+Submitting to [`main`](https://github.com/carlosdoliveira/Intersect-Engine/tree/main) _requires_ commits to be GPG signed, and GPG signing of all commits is strongly recommended for _all_ pull requests.
 
 You can read about how to set up Git for commit signing [in the GitHub Docs](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
 
@@ -154,7 +154,7 @@ All assets should be submitting in the [AscensionGameDev/Intersect-Assets](https
 
 #### Your First Merged Pull Request
 
-When your first pull request is ready to be merged or if it is a [simple enough change](https://github.com/AscensionGameDev/Intersect-Engine/pull/1102) please make sure you are listed in [`AUTHORS.md` under "Intersect Contributors"](AUTHORS.md#intersect-contributors).
+When your first pull request is ready to be merged or if it is a [simple enough change](https://github.com/carlosdoliveira/Intersect-Engine/pull/1102) please make sure you are listed in [`AUTHORS.md` under "Intersect Contributors"](AUTHORS.md#intersect-contributors).
 
 #### Pull Request Maintenance
 
