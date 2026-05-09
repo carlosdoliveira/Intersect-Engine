@@ -14,6 +14,8 @@ namespace Intersect;
 
 public partial record Options
 {
+    private static readonly object InstanceSync = new();
+
     private static readonly JsonSerializerSettings PrivateIndentedSerializerSettings = new()
     {
         ContractResolver = new OptionsContractResolver(true, false),
@@ -242,94 +244,109 @@ public partial record Options
 
     public static bool LoadFromDisk()
     {
-        var instance = ReadFromDisk();
-        Instance = instance;
-        PendingChanges = null;
+        lock (InstanceSync)
+        {
+            var instance = ReadFromDisk();
+            Instance = instance;
+            PendingChanges = null;
 
-        SaveToDisk();
+            SaveToDisk();
 
-        return true;
+            return true;
+        }
     }
 
     public static OptionsReloadResult ReloadLiveFromDisk()
     {
-        var current = Instance ?? EnsureCreated();
-        var originalLoggingLevel = current.Logging.Level;
-        Options updated;
-
-        try
+        lock (InstanceSync)
         {
-            updated = ReadFromDisk(throwIfMissing: true);
+            var current = Instance ?? EnsureCreated();
+            var originalLoggingLevel = current.Logging.Level;
+            Options updated;
+
+            try
+            {
+                updated = ReadFromDisk(throwIfMissing: true);
+            }
+            catch
+            {
+                LoggingOptions.LoggingLevelSwitch.MinimumLevel = LevelConvert.ToSerilogLevel(originalLoggingLevel);
+                throw;
+            }
+
+            List<string> appliedChanges = [];
+            List<string> restartRequiredChanges = [];
+            ApplyReloadableChanges(current, updated, appliedChanges, restartRequiredChanges);
+
+            current.SmtpValid = current.SmtpSettings.IsValid();
+            current.FixAnimatedSprites();
+            current.RefreshSerializedData();
+            PendingChanges = null;
+
+            return new OptionsReloadResult(appliedChanges, restartRequiredChanges);
         }
-        catch
-        {
-            LoggingOptions.LoggingLevelSwitch.MinimumLevel = LevelConvert.ToSerilogLevel(originalLoggingLevel);
-            throw;
-        }
-
-        List<string> appliedChanges = [];
-        List<string> restartRequiredChanges = [];
-        ApplyReloadableChanges(current, updated, appliedChanges, restartRequiredChanges);
-
-        current.SmtpValid = current.SmtpSettings.IsValid();
-        current.FixAnimatedSprites();
-        current.RefreshSerializedData();
-        PendingChanges = null;
-
-        return new OptionsReloadResult(appliedChanges, restartRequiredChanges);
     }
 
     internal static Options EnsureCreated()
     {
-        Options instance = new();
-        Instance = instance;
-        return instance;
+        lock (InstanceSync)
+        {
+            Options instance = new();
+            Instance = instance;
+            return instance;
+        }
     }
 
     public static void SaveToDisk()
     {
-        if (Instance is not { } instance)
+        lock (InstanceSync)
         {
-            ApplicationContext.Context.Value?.Logger.LogError("Tried to save null instance to disk");
-            return;
-        }
+            if (Instance is not { } instance)
+            {
+                ApplicationContext.Context.Value?.Logger.LogError("Tried to save null instance to disk");
+                return;
+            }
 
-        if (!Directory.Exists(ResourcesDirectory))
-        {
-            Directory.CreateDirectory(ResourcesDirectory);
-        }
+            if (!Directory.Exists(ResourcesDirectory))
+            {
+                Directory.CreateDirectory(ResourcesDirectory);
+            }
 
-        var pathToServerConfig = Path.Combine(ResourcesDirectory, "config.json");
+            var pathToServerConfig = Path.Combine(ResourcesDirectory, "config.json");
 
-        try
-        {
-            var serializedPrivateConfiguration = JsonConvert.SerializeObject(instance, PrivateIndentedSerializerSettings);
-            File.WriteAllText(pathToServerConfig, serializedPrivateConfiguration);
-        }
-        catch (Exception exception)
-        {
-            ApplicationContext.Context.Value?.Logger.LogError(
-                exception,
-                "Failed to save options to {OptionsPath}",
-                pathToServerConfig
-            );
-        }
+            try
+            {
+                var serializedPrivateConfiguration = JsonConvert.SerializeObject(instance, PrivateIndentedSerializerSettings);
+                File.WriteAllText(pathToServerConfig, serializedPrivateConfiguration);
+            }
+            catch (Exception exception)
+            {
+                ApplicationContext.Context.Value?.Logger.LogError(
+                    exception,
+                    "Failed to save options to {OptionsPath}",
+                    pathToServerConfig
+                );
+            }
 
-        instance.RefreshSerializedData();
+            instance.RefreshSerializedData();
+        }
     }
 
     public static void LoadFromServer(string data)
     {
-        try
+        lock (InstanceSync)
         {
-            var loadedOptions = JsonConvert.DeserializeObject<Options>(data, PublicSerializerSettings);
-            Instance = loadedOptions;
-            OptionsLoaded?.Invoke(loadedOptions);
-        }
-        catch (Exception exception)
-        {
-            ApplicationContext.CurrentContext.Logger.LogError(exception, "Failed to load options from server");
-            throw;
+            try
+            {
+                var loadedOptions = JsonConvert.DeserializeObject<Options>(data, PublicSerializerSettings);
+                Instance = loadedOptions;
+                OptionsLoaded?.Invoke(loadedOptions);
+            }
+            catch (Exception exception)
+            {
+                ApplicationContext.CurrentContext.Logger.LogError(exception, "Failed to load options from server");
+                throw;
+            }
         }
     }
 
