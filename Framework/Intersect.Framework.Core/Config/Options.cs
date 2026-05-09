@@ -430,7 +430,10 @@ public partial record Options
             return currentValue != updatedValue;
         }
 
-        return !JToken.DeepEquals(JToken.FromObject(currentValue), JToken.FromObject(updatedValue));
+        var currentToken = JToken.FromObject(currentValue);
+        var updatedToken = JToken.FromObject(updatedValue);
+
+        return !JToken.DeepEquals(currentToken, updatedToken);
     }
 
     private static Options ReadFromDisk(bool throwIfMissing = false)
