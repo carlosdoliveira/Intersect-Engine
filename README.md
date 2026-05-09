@@ -4,7 +4,7 @@ Intersect provides a complete game development suite for creating 2d mmorpgs wit
 
 [![Home https://freemmorpgmaker.com](https://img.shields.io/badge/Home-Free%20MMORPG%20Maker-informational)](https://freemmorpgmaker.com)
 [![Docs https://docs.freemmorpgmaker.com](https://img.shields.io/badge/Docs-Online-success)](https://docs.freemmorpgmaker.com)
-[![main](https://github.com/AscensionGameDev/Intersect-Engine/actions/workflows/build.yml/badge.svg)](https://github.com/AscensionGameDev/Intersect-Engine/actions/workflows/build.yml)
+[![main](https://github.com/carlosdoliveira/Intersect-Engine/actions/workflows/build.yml/badge.svg)](https://github.com/carlosdoliveira/Intersect-Engine/actions/workflows/build.yml)
 [![Visit us at https://ascensiongamedev.com](https://img.shields.io/badge/Community-Ascension%20Game%20Dev-orange)](https://ascensiongamedev.com)
 [![Join the chat at https://discord.gg/Ggt3KJV](https://img.shields.io/discord/363106200243535872?color=%237289DA&label=Discord&logoColor=white)](https://discord.gg/Ggt3KJV)
 
@@ -25,7 +25,7 @@ Intersect provides a complete game development suite for creating 2d mmorpgs wit
 
 ## Automated Builds
 
-We use [GitHub Actions](https://github.com/AscensionGameDev/Intersect-Engine/actions) for building and packaging the latest updates for the engine. Releases with downloadable bundles can be found on the [Releases page on our GitHub repository](https://github.com/AscensionGameDev/Intersect-Engine/releases).
+We use [GitHub Actions](https://github.com/carlosdoliveira/Intersect-Engine/actions) for building and packaging the latest updates for the engine. Releases with downloadable bundles can be found on the [Releases page on our GitHub repository](https://github.com/carlosdoliveira/Intersect-Engine/releases).
 
 ## Supported Platforms
 
@@ -78,9 +78,9 @@ Intersect is distributed with [custom assets](https://github.com/AscensionGameDe
 
 ## Support and Contributions
 
-If you think you have found a bug or have a feature request, use our [issue tracker](https://github.com/AscensionGameDev/Intersect-Engine/issues). Before opening a new issue, please search to see if your problem has already been reported.  Try to be as detailed as possible in your issue reports.
+If you think you have found a bug or have a feature request, use our [issue tracker](https://github.com/carlosdoliveira/Intersect-Engine/issues). Before opening a new issue, please search to see if your problem has already been reported.  Try to be as detailed as possible in your issue reports.
 
-If you need help using Intersect or have other questions we suggest you post on our [community forums](https://ascensiongamedev.com).  Please do not use the GitHub issue tracker for personal support requests.
+If you need help using Intersect or have other questions, please open a [GitHub Discussion](https://github.com/carlosdoliveira/Intersect-Engine/discussions). Please do not use the GitHub issue tracker for personal support requests.
 
 If you are interested in contributing fixes or features to Intersect, please read our [contributors guide](CONTRIBUTING.md) first.
 
@@ -89,7 +89,7 @@ If you are interested in contributing fixes or features to Intersect, please rea
 
 Getting started with Intersect couldn't be easier. Make sure you have Visual Studio 2019 Community installed.
 
- * Clone the source: `git clone https://github.com/AscensionGameDev/Intersect-Engine.git`
+ * Clone the source: `git clone https://github.com/carlosdoliveira/Intersect-Engine.git`
  * Open Intersect.sln
  * Restore Nuget packages
  * Build
@@ -118,8 +118,8 @@ Third-party libraries used by Intersect are under their own licenses.  Please re
 ## Helpful Links
 
  * The official website is [freemmorpgmaker.com](https://freemmorpgmaker.com).
- * Our [issue tracker](https://github.com/AscensionGameDev/Intersect-Engine/issues) is on GitHub.
- * Use our [community forums](https://ascensiongamedev.com/) for support questions.
+ * Our [issue tracker](https://github.com/carlosdoliveira/Intersect-Engine/issues) is on GitHub.
+ * Use [GitHub Discussions](https://github.com/carlosdoliveira/Intersect-Engine/discussions) for support questions.
  * The [official documentation](https://docs.freemmorpgmaker.com) is on our website.
  * The official [Intersect Assets](https://github.com/AscensionGameDev/Intersect-Assets) repo is separate and can be found on GitHub.
  * Download stable and development [installers and packages](https://freemmorpgmaker.com/download).
