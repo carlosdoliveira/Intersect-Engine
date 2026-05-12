@@ -5,7 +5,7 @@ using Intersect.Utilities;
 namespace Intersect.Editor.Forms;
 
 
-public partial class FrmAbout : Form
+public partial class FrmAbout : ResponsiveForm
 {
 
     public FrmAbout()

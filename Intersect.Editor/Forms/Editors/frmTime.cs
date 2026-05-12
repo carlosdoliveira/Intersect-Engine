@@ -1,5 +1,6 @@
 using System.Reflection;
 using DarkUI.Controls;
+using Intersect.Editor.Forms;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
@@ -8,7 +9,7 @@ using Intersect.GameObjects;
 namespace Intersect.Editor.Forms.Editors;
 
 
-public partial class FrmTime : Form
+public partial class FrmTime : ResponsiveForm
 {
 
     private DaylightCycleDescriptor mBackupTime;

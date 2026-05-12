@@ -10,7 +10,7 @@ using Graphics = System.Drawing.Graphics;
 namespace Intersect.Editor.Forms;
 
 
-public partial class FrmWarpSelection : Form
+public partial class FrmWarpSelection : ResponsiveForm
 {
 
     private Guid mCurrentMapId = Guid.Empty;

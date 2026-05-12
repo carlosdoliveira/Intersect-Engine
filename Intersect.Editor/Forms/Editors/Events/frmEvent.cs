@@ -2,6 +2,7 @@ using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
+using Intersect.Editor.Forms;
 using Intersect.Editor.Forms.Editors.Events.Event_Commands;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
@@ -20,7 +21,7 @@ using Graphics = System.Drawing.Graphics;
 namespace Intersect.Editor.Forms.Editors.Events;
 
 
-public partial class FrmEvent : Form
+public partial class FrmEvent : ResponsiveForm
 {
 
     private static string mCopyData = null;

@@ -1,4 +1,5 @@
 ﻿using Intersect.Editor.Core;
+using Intersect.Editor.Forms;
 using Intersect.Editor.Forms.Editors.Events.Event_Commands;
 using Intersect.Editor.Localization;
 using Intersect.Framework.Core.GameObjects.Conditions;
@@ -32,7 +33,7 @@ public enum RequirementType
 
 }
 
-public partial class FrmDynamicRequirements : Form
+public partial class FrmDynamicRequirements : ResponsiveForm
 {
 
     private ConditionList mEdittingList;
