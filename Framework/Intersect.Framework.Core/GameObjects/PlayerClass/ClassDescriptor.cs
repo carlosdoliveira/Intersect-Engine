@@ -118,6 +118,9 @@ public partial class ClassDescriptor : DatabaseObject<ClassDescriptor>, IFoldera
     [NotMapped]
     public List<ClassSprite> Sprites { get; set; } = [];
 
+    [NotMapped]
+    public ClassSkillTree SkillTree { get; set; } = new ClassSkillTree();
+
     [NotMapped, JsonIgnore]
     public int[] StatIncrease { get; set; } = new int[Enum.GetValues<Stat>().Length];
 
@@ -136,6 +139,7 @@ public partial class ClassDescriptor : DatabaseObject<ClassDescriptor>, IFoldera
         ExperienceCurve.Calculate(1);
         BaseExp = DEFAULT_BASE_EXPERIENCE;
         ExpIncrease = DEFAULT_EXPERIENCE_INCREASE;
+        SkillTree.ClassId = id;
     }
 
     //Parameterless constructor for EF
@@ -318,6 +322,15 @@ public partial class ClassDescriptor : DatabaseObject<ClassDescriptor>, IFoldera
                 ExperienceOverrides = new Dictionary<int, long>();
             }
         }
+    }
+
+    //Skill Tree Configuration
+    [JsonIgnore]
+    [Column("SkillTree")]
+    public string JsonSkillTree
+    {
+        get => JsonConvert.SerializeObject(SkillTree);
+        protected set => SkillTree = JsonConvert.DeserializeObject<ClassSkillTree>(value) ?? new ClassSkillTree();
     }
 
     /// <inheritdoc />
