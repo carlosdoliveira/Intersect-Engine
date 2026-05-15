@@ -2,6 +2,7 @@ using System.Media;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
 using Intersect.Editor.Localization;
+using Microsoft.Extensions.Logging;
 
 namespace Intersect.Editor.Forms.Editors;
 
@@ -89,8 +90,9 @@ public partial class FrmSoundPlayer : ResponsiveForm
             _soundPlayer.Play();
             _isPlaying = true;
         }
-        catch
+        catch (Exception ex)
         {
+            Intersect.Core.ApplicationContext.Context.Value?.Logger.LogError(ex, "Failed to play sound: {0}", fileName);
             StopSound();
         }
     }

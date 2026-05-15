@@ -1,9 +1,7 @@
-using System.Media;
-using DarkUI.Controls;
-using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
 using Intersect.Editor.Localization;
+using Microsoft.Extensions.Logging;
 using NAudio.Vorbis;
 using NAudio.Wave;
 
@@ -117,20 +115,18 @@ public partial class FrmMusicPlayer : ResponsiveForm
             _musicOutput.Play();
             _currentMusicFile = fileName;
         }
-        catch
+        catch (Exception ex)
         {
+            Intersect.Core.ApplicationContext.Context.Value?.Logger.LogError(ex, "Failed to play music: {0}", fileName);
             StopMusic();
         }
     }
 
     private static void OnMusicPlaybackStopped(object? sender, StoppedEventArgs e)
     {
-        // Cleanup only when naturally finished (not manually stopped)
-        if (e.Exception == null && _musicOutput?.PlaybackState == PlaybackState.Stopped)
-        {
-            DisposeAudioResources();
-            _currentMusicFile = null;
-        }
+        // Natural completion: cleanup resources (manual stop unsubscribes before calling Stop())
+        DisposeAudioResources();
+        _currentMusicFile = null;
     }
 
     private static void StopMusic()
