@@ -1,5 +1,6 @@
 using DarkUI.Forms;
 using Intersect.Editor.Core;
+using Intersect.Editor.Forms;
 using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
@@ -382,7 +383,7 @@ public partial class FrmQuest : EditorForm
     private bool OpenTaskEditor(QuestTaskDescriptor task)
     {
         var cmdWindow = new QuestTaskEditor(mEditorItem, task);
-        var frm = new Form
+        var frm = new QuestTaskDialogForm
         {
             Text = Strings.TaskEditor.title
         };
@@ -402,6 +403,10 @@ public partial class FrmQuest : EditorForm
         }
 
         return false;
+    }
+
+    private sealed class QuestTaskDialogForm : ResponsiveForm
+    {
     }
 
     private void btnRemoveTask_Click(object sender, EventArgs e)
