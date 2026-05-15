@@ -29,11 +29,14 @@ public class ResponsiveForm : Form
             return;
         }
 
-        FormBorderStyle = FormBorderStyle == FormBorderStyle.FixedToolWindow
-            ? PreserveToolWindowChrome
-                ? FormBorderStyle.SizableToolWindow
-                : FormBorderStyle.Sizable
-            : FormBorderStyle.Sizable;
+        if (FormBorderStyle == FormBorderStyle.FixedToolWindow && PreserveToolWindowChrome)
+        {
+            FormBorderStyle = FormBorderStyle.SizableToolWindow;
+
+            return;
+        }
+
+        FormBorderStyle = FormBorderStyle.Sizable;
     }
 
 }
