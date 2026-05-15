@@ -6,7 +6,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 
 namespace Intersect.Editor.Forms;
 
-public partial class FrmVariableSelector : Form
+public partial class FrmVariableSelector : ResponsiveForm
 {
     private Guid mSelectedVariableId { get; set; }
 

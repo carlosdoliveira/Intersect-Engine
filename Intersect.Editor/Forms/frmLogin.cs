@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 namespace Intersect.Editor.Forms;
 
 
-public partial class FrmLogin : Form
+public partial class FrmLogin : ResponsiveForm
 {
 
     //Cross Thread Delegates

@@ -28,7 +28,7 @@ using WeifenLuo.WinFormsUI.Docking;
 namespace Intersect.Editor.Forms;
 
 
-public partial class FrmMain : Form
+public partial class FrmMain : ResponsiveForm
 {
 
     public delegate void HandleDisconnect();

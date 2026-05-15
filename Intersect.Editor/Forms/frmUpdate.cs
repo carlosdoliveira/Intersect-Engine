@@ -15,7 +15,7 @@ using ApplicationContext = Intersect.Core.ApplicationContext;
 namespace Intersect.Editor.Forms;
 
 
-public partial class FrmUpdate : Form
+public partial class FrmUpdate : ResponsiveForm
 {
 
     private readonly object _manifestTaskLock = new();

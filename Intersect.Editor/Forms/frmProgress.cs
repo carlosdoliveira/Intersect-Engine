@@ -4,7 +4,7 @@ using Intersect.Editor.Localization;
 namespace Intersect.Editor.Forms;
 
 
-public partial class FrmProgress : Form
+public partial class FrmProgress : ResponsiveForm
 {
 
     private int mProgressVal;

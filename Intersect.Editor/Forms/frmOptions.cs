@@ -5,7 +5,7 @@ using Intersect.Editor.Localization;
 namespace Intersect.Editor.Forms;
 
 
-public partial class FrmOptions : Form
+public partial class FrmOptions : ResponsiveForm
 {
 
     public FrmOptions()

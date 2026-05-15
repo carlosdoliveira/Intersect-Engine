@@ -1,5 +1,6 @@
 using DarkUI.Controls;
 using Intersect.Editor.Core;
+using Intersect.Editor.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Microsoft.Extensions.Logging;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace Intersect.Editor.Forms.Editors;
 
 
-public partial class EditorForm : Form
+public partial class EditorForm : ResponsiveForm
 {
 
     private bool mClosing = false;
