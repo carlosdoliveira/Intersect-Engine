@@ -1,5 +1,30 @@
 # Features
 
+## Editor
+
+### Audio Player (BGM & BGS)
+
+The editor includes built-in audio preview players so you can audition music and sound assets without leaving the editor. Both players are accessible from **Game Editors** in the main menu bar.
+
+#### Music Player (BGM)
+
+Opens from **Content Editors → Music Player (BGM)**.
+
+- Lists all `.ogg` files found in `resources/music`.
+- Select a track from the list and click **▶ Play** to start playback from the beginning.
+- The button label switches to **■ Stop** while a track is playing. Click **Stop** to halt playback at any time.
+- **Closing the window does not stop the music** — playback continues in the background. Re-opening the window will show the currently-playing track selected and the **Stop** button active.
+- Only one Music Player window can be open at a time; triggering the menu item again brings the existing window to the front.
+
+#### Sound Player (BGS)
+
+Opens from **Content Editors → Sound Player (BGS)**.
+
+- Lists all `.wav` files found in `resources/sounds`.
+- Select a sound from the list and click **▶ Play** to play it.
+- The button label switches to **■ Stop** while the sound is playing. Click **Stop** to halt it.
+- **Closing the window stops playback immediately.**
+
 ## Server
 
 ### Configuration Reload
