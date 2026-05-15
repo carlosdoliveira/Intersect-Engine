@@ -1306,8 +1306,15 @@ public partial class FrmMain : ResponsiveForm
 
     private void musicPlayerToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        var form = new FrmMusicPlayer();
-        form.Show(this);
+        var form = FrmMusicPlayer.GetOrCreate();
+        if (!form.Visible)
+        {
+            form.Show(this);
+        }
+        else
+        {
+            form.BringToFront();
+        }
     }
 
     private void soundPlayerToolStripMenuItem_Click(object sender, EventArgs e)

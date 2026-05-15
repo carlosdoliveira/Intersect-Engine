@@ -10,30 +10,52 @@ namespace Intersect.Editor.Forms.Editors;
 public partial class FrmMusicPlayer : ResponsiveForm
 {
     // Static state so music persists after window is closed
+    private static readonly object _audioLock = new();
     private static WaveOutEvent? _musicOutput;
     private static VorbisWaveReader? _musicReader;
     private static string? _currentMusicFile;
+
+    // Only one instance at a time
+    private static FrmMusicPlayer? _instance;
+
+    public static FrmMusicPlayer GetOrCreate()
+    {
+        if (_instance == null || _instance.IsDisposed)
+        {
+            _instance = new FrmMusicPlayer();
+        }
+
+        return _instance;
+    }
 
     public FrmMusicPlayer()
     {
         InitializeComponent();
         Icon = Program.Icon;
-        InitLocalization();
     }
 
     private void InitLocalization()
     {
         Text = Strings.MusicPlayer.title;
-        btnPlayStop.Text = IsPlaying ? Strings.MusicPlayer.stop : Strings.MusicPlayer.play;
         btnClose.Text = Strings.MusicPlayer.close;
+        UpdatePlayStopButton();
     }
 
-    private static bool IsPlaying => _musicOutput?.PlaybackState == PlaybackState.Playing;
+    private static bool IsPlaying
+    {
+        get
+        {
+            lock (_audioLock)
+            {
+                return _musicOutput?.PlaybackState == PlaybackState.Playing;
+            }
+        }
+    }
 
     private void FrmMusicPlayer_Load(object sender, EventArgs e)
     {
+        InitLocalization();
         PopulateFileList();
-        UpdatePlayStopButton();
     }
 
     private void PopulateFileList()
@@ -49,9 +71,15 @@ public partial class FrmMusicPlayer : ResponsiveForm
         }
 
         // If there is something currently playing, select it in the list
-        if (!string.IsNullOrEmpty(_currentMusicFile))
+        string? current;
+        lock (_audioLock)
         {
-            var index = lstFiles.Items.IndexOf(_currentMusicFile);
+            current = _currentMusicFile;
+        }
+
+        if (!string.IsNullOrEmpty(current))
+        {
+            var index = lstFiles.Items.IndexOf(current);
             if (index >= 0)
             {
                 lstFiles.SelectedIndex = index;
@@ -61,14 +89,7 @@ public partial class FrmMusicPlayer : ResponsiveForm
 
     private void UpdatePlayStopButton()
     {
-        if (IsPlaying)
-        {
-            btnPlayStop.Text = Strings.MusicPlayer.stop;
-        }
-        else
-        {
-            btnPlayStop.Text = Strings.MusicPlayer.play;
-        }
+        btnPlayStop.Text = IsPlaying ? Strings.MusicPlayer.stop : Strings.MusicPlayer.play;
     }
 
     private void btnPlayStop_Click(object sender, EventArgs e)
@@ -106,42 +127,54 @@ public partial class FrmMusicPlayer : ResponsiveForm
             return;
         }
 
-        try
+        lock (_audioLock)
         {
-            _musicReader = new VorbisWaveReader(filePath);
-            _musicOutput = new WaveOutEvent();
-            _musicOutput.Init(_musicReader);
-            _musicOutput.PlaybackStopped += OnMusicPlaybackStopped;
-            _musicOutput.Play();
-            _currentMusicFile = fileName;
-        }
-        catch (Exception ex)
-        {
-            Intersect.Core.ApplicationContext.Context.Value?.Logger.LogError(ex, "Failed to play music: {0}", fileName);
-            StopMusic();
+            try
+            {
+                _musicReader = new VorbisWaveReader(filePath);
+                _musicOutput = new WaveOutEvent();
+                _musicOutput.Init(_musicReader);
+                _musicOutput.PlaybackStopped += OnMusicPlaybackStopped;
+                _musicOutput.Play();
+                _currentMusicFile = fileName;
+            }
+            catch (Exception ex)
+            {
+                Intersect.Core.ApplicationContext.Context.Value?.Logger.LogError(ex, "Failed to play music: {0}", fileName);
+                DisposeAudioResourcesLocked();
+                _currentMusicFile = null;
+            }
         }
     }
 
     private static void OnMusicPlaybackStopped(object? sender, StoppedEventArgs e)
     {
-        // Natural completion: cleanup resources (manual stop unsubscribes before calling Stop())
-        DisposeAudioResources();
-        _currentMusicFile = null;
+        // Invoked on NAudio background thread; use lock to protect static state
+        lock (_audioLock)
+        {
+            // Natural completion: cleanup resources (manual stop unsubscribes before calling Stop())
+            DisposeAudioResourcesLocked();
+            _currentMusicFile = null;
+        }
     }
 
     private static void StopMusic()
     {
-        if (_musicOutput != null)
+        lock (_audioLock)
         {
-            _musicOutput.PlaybackStopped -= OnMusicPlaybackStopped;
-            _musicOutput.Stop();
-        }
+            if (_musicOutput != null)
+            {
+                _musicOutput.PlaybackStopped -= OnMusicPlaybackStopped;
+                _musicOutput.Stop();
+            }
 
-        DisposeAudioResources();
-        _currentMusicFile = null;
+            DisposeAudioResourcesLocked();
+            _currentMusicFile = null;
+        }
     }
 
-    private static void DisposeAudioResources()
+    /// <summary>Must be called while holding <see cref="_audioLock"/>.</summary>
+    private static void DisposeAudioResourcesLocked()
     {
         _musicOutput?.Dispose();
         _musicOutput = null;
