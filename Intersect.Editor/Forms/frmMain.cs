@@ -193,6 +193,8 @@ public partial class FrmMain : ResponsiveForm
         spellEditorToolStripMenuItem.Text = Strings.MainForm.spelleditor;
         variableEditorToolStripMenuItem.Text = Strings.MainForm.variableeditor;
         timeEditorToolStripMenuItem.Text = Strings.MainForm.timeeditor;
+        musicPlayerToolStripMenuItem.Text = Strings.MainForm.musicplayer;
+        soundPlayerToolStripMenuItem.Text = Strings.MainForm.soundplayer;
     }
 
     private void InitLocalizationMenuTools()
@@ -1300,6 +1302,18 @@ public partial class FrmMain : ResponsiveForm
     private void timeEditorToolStripMenuItem_Click(object sender, EventArgs e)
     {
         PacketSender.SendOpenEditor(GameObjectType.Time);
+    }
+
+    private void musicPlayerToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        var form = new FrmMusicPlayer();
+        form.Show(this);
+    }
+
+    private void soundPlayerToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        var form = new FrmSoundPlayer();
+        form.Show(this);
     }
 
     private void layersToolStripMenuItem_DropDownOpened(object sender, EventArgs e)
