@@ -20,7 +20,9 @@ public class ResponsiveForm : Form
             return;
         }
 
-        FormBorderStyle = FormBorderStyle.Sizable;
+        FormBorderStyle = FormBorderStyle == FormBorderStyle.FixedToolWindow
+            ? FormBorderStyle.SizableToolWindow
+            : FormBorderStyle.Sizable;
         MaximizeBox = true;
     }
 
