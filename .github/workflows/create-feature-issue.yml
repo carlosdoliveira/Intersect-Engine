@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - "copilot/add-magic-item-continuous-effect"
-    paths:
-      - ".github/workflows/create-feature-issue.yml"
 
 jobs:
   create-issue:
@@ -13,15 +11,27 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: Create Issue
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const title = "feat: Continuous looping animation while item is equipped (magic item effect)";
-            const body = `## Overview
+      - name: Create Issue via gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          TITLE="feat: Continuous looping animation while item is equipped (magic item effect)"
 
-Introduce a **continuous looping animation** feature for items, where equipping an item causes a designated animation to loop indefinitely on the entity as long as the item remains equipped. This is the first step toward a broader "magic item persistent effects" system.
+          # Check if issue already exists
+          EXISTING=$(gh issue list --repo "$REPO" --search "$TITLE" --json title --jq ".[].title" 2>/dev/null | grep -F "$TITLE" || true)
+          if [ -n "$EXISTING" ]; then
+            echo "Issue already exists, skipping."
+            exit 0
+          fi
+
+          gh issue create \
+            --repo "$REPO" \
+            --title "$TITLE" \
+            --label "enhancement" \
+            --body "## Overview
+
+Introduce a **continuous looping animation** feature for items, where equipping an item causes a designated animation to loop indefinitely on the entity as long as the item remains equipped. This is the first step toward a broader \"magic item persistent effects\" system.
 
 ---
 
@@ -29,7 +39,7 @@ Introduce a **continuous looping animation** feature for items, where equipping 
 
 The engine already has the following foundations in place:
 - \`ItemDescriptor.AnimationId\` — general item animation
-- \`ItemDescriptor.AttackAnimationId\` — weapon swing/attack animation  
+- \`ItemDescriptor.AttackAnimationId\` — weapon swing/attack animation
 - \`ItemDescriptor.EquipmentAnimationId\` — paperdoll (sprite overlay) animation
 - \`Animation.InfiniteLoop\` — already implemented in the client \`Animation\` class to loop forever
 - \`ItemEventTrigger.OnEquip\` / \`OnUnequip\` — server-side event hooks
@@ -105,26 +115,4 @@ Ensure all active loop animations are disposed when the entity is removed from t
 
 - \`Animation.InfiniteLoop\` is already implemented in the client animation engine — no engine-level changes needed for the loop mechanism itself.
 - \`EquipmentAnimationId\` (paperdoll) is a separate concern and **must not** be repurposed.
-- Future work: extend this pattern to passive stat auras, visual tiers, and other persistent effects.`;
-
-            // Check if issue already exists
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: []
-            });
-            
-            const exists = issues.data.some(i => i.title === title);
-            if (!exists) {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: title,
-                body: body,
-                labels: ['enhancement']
-              });
-              console.log('Issue created successfully!');
-            } else {
-              console.log('Issue already exists, skipping creation.');
-            }
+- Future work: extend this pattern to passive stat auras, visual tiers, and other persistent effects."
