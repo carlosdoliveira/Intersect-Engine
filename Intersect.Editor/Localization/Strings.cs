@@ -4185,6 +4185,10 @@ Tick timer saved in server config.json.";
 
         public static LocalizedString timeeditor = @"Time Editor";
 
+        public static LocalizedString musicplayer = @"Music Player (BGM)";
+
+        public static LocalizedString soundplayer = @"Sound Player (BGS)";
+
         public static LocalizedString title = @"Intersect Editor - {00}";
 
         public static LocalizedString tools = @"Tools";
@@ -4197,6 +4201,32 @@ Tick timer saved in server config.json.";
         public static LocalizedString Undo = @"Undo (Ctrl + Z)";
 
         public static LocalizedString view = @"View";
+
+    }
+
+    public partial struct MusicPlayer
+    {
+
+        public static LocalizedString title = @"Music Player (BGM)";
+
+        public static LocalizedString play = @"▶  Play";
+
+        public static LocalizedString stop = @"■  Stop";
+
+        public static LocalizedString close = @"Close";
+
+    }
+
+    public partial struct SoundPlayer
+    {
+
+        public static LocalizedString title = @"Sound Player (BGS)";
+
+        public static LocalizedString play = @"▶  Play";
+
+        public static LocalizedString stop = @"■  Stop";
+
+        public static LocalizedString close = @"Close";
 
     }
 

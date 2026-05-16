@@ -70,6 +70,7 @@ For the extended engine features, please refer to the [Features](./Documentation
 
 Extended engine features include things such as:
 - [Built-in Server Website](./Documentation/Features.md#homepage)
+- [Audio Preview in the Editor](./Documentation/Features.md#audio-player-bgm--bgs)
 
 ## Intersect Assets
 

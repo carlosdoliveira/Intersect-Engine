@@ -116,6 +116,8 @@ namespace Intersect.Editor.Forms
             this.spellEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.variableEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timeEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.musicPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.soundPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.postQuestionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reportBugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -817,7 +819,9 @@ namespace Intersect.Editor.Forms
             this.shopEditorToolStripMenuItem,
             this.spellEditorToolStripMenuItem,
             this.variableEditorToolStripMenuItem,
-            this.timeEditorToolStripMenuItem});
+            this.timeEditorToolStripMenuItem,
+            this.musicPlayerToolStripMenuItem,
+            this.soundPlayerToolStripMenuItem});
             this.contentEditorsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
             this.contentEditorsToolStripMenuItem.Name = "contentEditorsToolStripMenuItem";
             this.contentEditorsToolStripMenuItem.Size = new System.Drawing.Size(101, 20);
@@ -934,6 +938,22 @@ namespace Intersect.Editor.Forms
             this.timeEditorToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
             this.timeEditorToolStripMenuItem.Text = "Time Editor";
             this.timeEditorToolStripMenuItem.Click += new System.EventHandler(this.timeEditorToolStripMenuItem_Click);
+            // 
+            // musicPlayerToolStripMenuItem
+            // 
+            this.musicPlayerToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
+            this.musicPlayerToolStripMenuItem.Name = "musicPlayerToolStripMenuItem";
+            this.musicPlayerToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.musicPlayerToolStripMenuItem.Text = "Music Player (BGM)";
+            this.musicPlayerToolStripMenuItem.Click += new System.EventHandler(this.musicPlayerToolStripMenuItem_Click);
+            // 
+            // soundPlayerToolStripMenuItem
+            // 
+            this.soundPlayerToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(220)))));
+            this.soundPlayerToolStripMenuItem.Name = "soundPlayerToolStripMenuItem";
+            this.soundPlayerToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.soundPlayerToolStripMenuItem.Text = "Sound Player (BGS)";
+            this.soundPlayerToolStripMenuItem.Click += new System.EventHandler(this.soundPlayerToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -1123,5 +1143,7 @@ namespace Intersect.Editor.Forms
         private ToolStripMenuItem packageUpdateToolStripMenuItem;
         private ToolStripMenuItem layersToolStripMenuItem;
         private ToolStripMenuItem hideEventsToolStripMenuItem;
+        private ToolStripMenuItem musicPlayerToolStripMenuItem;
+        private ToolStripMenuItem soundPlayerToolStripMenuItem;
     }
 }
