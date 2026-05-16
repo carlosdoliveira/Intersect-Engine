@@ -1,0 +1,130 @@
+name: Create Feature Issue
+
+on:
+  push:
+    branches:
+      - "copilot/add-magic-item-continuous-effect"
+    paths:
+      - ".github/workflows/create-feature-issue.yml"
+
+jobs:
+  create-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create Issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = "feat: Continuous looping animation while item is equipped (magic item effect)";
+            const body = `## Overview
+
+Introduce a **continuous looping animation** feature for items, where equipping an item causes a designated animation to loop indefinitely on the entity as long as the item remains equipped. This is the first step toward a broader "magic item persistent effects" system.
+
+---
+
+## Background & Context
+
+The engine already has the following foundations in place:
+- \`ItemDescriptor.AnimationId\` — general item animation
+- \`ItemDescriptor.AttackAnimationId\` — weapon swing/attack animation  
+- \`ItemDescriptor.EquipmentAnimationId\` — paperdoll (sprite overlay) animation
+- \`Animation.InfiniteLoop\` — already implemented in the client \`Animation\` class to loop forever
+- \`ItemEventTrigger.OnEquip\` / \`OnUnequip\` — server-side event hooks
+
+What is missing is a dedicated **loop-while-equipped** animation field and the client-side machinery to start/stop it based on equipment state.
+
+---
+
+## Proposed Changes
+
+### 1. Data Model — \`ItemDescriptor\`
+**File:** \`Framework/Intersect.Framework.Core/GameObjects/Items/ItemDescriptor.cs\`
+
+Add a new \`EquipLoopAnimationId\` (Guid) property with a corresponding \`EquipLoopAnimation\` navigation property. A separate field is required — \`EquipmentAnimationId\` already serves the paperdoll sprite purpose and must not be repurposed.
+
+### 2. Database Migration
+
+Add an EF Core migration to include the \`EquipLoopAnimation\` column on the items table in both the Server and Editor DB contexts.
+
+### 3. Item Editor UI
+**File:** \`Intersect.Editor/Forms/Editors/frmItem.cs\` (+ Designer)
+
+- Add a new \`ComboBox\` control (\`cmbEquipLoopAnimation\`) alongside the existing animation dropdowns in the equipment section.
+- Label: **Loop Animation (While Equipped)**
+- Populate with \`AnimationDescriptor.Names\`, same as \`cmbEquipmentAnimation\`.
+- Wire up \`UpdateEditor()\` and \`SaveChanges()\` to read/write \`EquipLoopAnimationId\`.
+
+### 4. Client — Entity Animation Tracking
+**File:** \`Intersect.Client.Core/Entities/Entity.cs\` (or relevant subclass)
+
+- Add a \`Dictionary<int, Animation>\` (keyed by equipment slot) to track active loop animations per slot.
+- Add helper methods:
+  - \`StartEquipLoopAnimation(int slot, AnimationDescriptor anim)\` — creates an \`Animation\` with \`loopForever: true\` attached to the entity.
+  - \`StopEquipLoopAnimation(int slot)\` — disposes and removes the animation for that slot.
+
+### 5. Client — Equipment Packet Handling
+
+When an \`EquipmentPacket\` is received (or whenever local equipment state changes):
+1. For each slot: if the item has a non-empty \`EquipLoopAnimationId\`, stop any existing loop animation for that slot and start a new one with \`loopForever: true\`.
+2. If the slot is now empty or the item has no loop animation, stop and remove the existing loop animation.
+
+### 6. Cleanup on Dispose / Map Change
+
+Ensure all active loop animations are disposed when the entity is removed from the scene (map change, entity death, logout, etc.).
+
+---
+
+## Acceptance Criteria
+
+- [ ] \`ItemDescriptor\` has a new \`EquipLoopAnimationId\` field persisted to the database
+- [ ] The Item Editor shows a **Loop Animation (While Equipped)** dropdown in the equipment section
+- [ ] Equipping an item with this field set causes the specified animation to play and loop indefinitely on the entity in the client
+- [ ] Unequipping the item immediately stops and removes the looping animation
+- [ ] Equipping a different item in the same slot replaces the previous loop animation correctly
+- [ ] The animation renders correctly for both the local player and other visible entities on the map
+- [ ] No animation leak occurs on map transitions or entity disposal
+
+---
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| \`Framework/.../Items/ItemDescriptor.cs\` | Add \`EquipLoopAnimationId\` + navigation property |
+| \`Intersect.Editor/Forms/Editors/frmItem.cs\` + Designer | Add \`cmbEquipLoopAnimation\` control |
+| \`Intersect.Client.Core/Entities/Entity.cs\` (or subclass) | Add loop animation tracking + start/stop helpers |
+| EquipmentPacket handler (client) | Trigger start/stop on equipment change |
+| DB migration files | Schema migration for new column |
+
+---
+
+## Notes
+
+- \`Animation.InfiniteLoop\` is already implemented in the client animation engine — no engine-level changes needed for the loop mechanism itself.
+- \`EquipmentAnimationId\` (paperdoll) is a separate concern and **must not** be repurposed.
+- Future work: extend this pattern to passive stat auras, visual tiers, and other persistent effects.`;
+
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: []
+            });
+            
+            const exists = issues.data.some(i => i.title === title);
+            if (!exists) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['enhancement']
+              });
+              console.log('Issue created successfully!');
+            } else {
+              console.log('Issue already exists, skipping creation.');
+            }
