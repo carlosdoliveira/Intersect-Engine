@@ -34,8 +34,6 @@ public partial class MainMenu : MutableInterface
 
     private LoginWindow LoginWindow => _loginWindow ??= new LoginWindow(_menuCanvas, this)
     {
-        Alignment = [Alignments.CenterH],
-        Y = 480,
         IsVisibleInTree = false,
     };
 
@@ -43,8 +41,6 @@ public partial class MainMenu : MutableInterface
 
     private RegistrationWindow RegistrationWindow => _registrationWindow ??= new RegistrationWindow(_menuCanvas, this)
     {
-        Alignment = [Alignments.CenterH],
-        Y = 480,
         IsVisibleInTree = false,
     };
 
@@ -63,8 +59,6 @@ public partial class MainMenu : MutableInterface
 
     private CharacterCreationWindow CharacterCreationWindow => _characterCreationWindow ??= new CharacterCreationWindow(_menuCanvas, this, SelectCharacterWindow)
     {
-        Alignment = [Alignments.CenterH],
-        Y = 480,
         IsVisibleInTree = false,
     };
 
@@ -72,8 +66,6 @@ public partial class MainMenu : MutableInterface
 
     private CreditsWindow CreditsWindow => _creditsWindow ??= new CreditsWindow(_menuCanvas, this)
     {
-        Alignment = [Alignments.CenterH],
-        Y = 480,
         IsVisibleInTree = false,
     };
 
@@ -82,8 +74,6 @@ public partial class MainMenu : MutableInterface
     public SelectCharacterWindow SelectCharacterWindow => _selectCharacterWindow ??=
         new SelectCharacterWindow(_menuCanvas, this)
         {
-            Alignment = [Alignments.CenterH],
-            Y = 480,
             IsVisibleInTree = false,
         };
 
@@ -91,8 +81,6 @@ public partial class MainMenu : MutableInterface
 
     private SettingsWindow SettingsWindow => _settingsWindow ??= new SettingsWindow(_menuCanvas)
     {
-        Alignment = [Alignments.CenterH],
-        Y = 480,
         IsVisibleInTree = false,
     };
 
@@ -101,8 +89,6 @@ public partial class MainMenu : MutableInterface
         _menuCanvas = menuCanvas;
         _mainMenuWindow = new MainMenuWindow(_menuCanvas, this)
         {
-            Alignment = [Alignments.CenterH],
-            Y = 480,
             IsVisibleInTree = true,
         };
 
